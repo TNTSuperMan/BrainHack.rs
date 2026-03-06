@@ -1,3 +1,9 @@
+mod ir;
+
+use std::path::Path;
+
+use crate::ir::parse_to_ir;
+
 fn main() {
-    println!("Hello, world!");
+    parse_to_ir(&Path::new("./box/example.js"));
 }
