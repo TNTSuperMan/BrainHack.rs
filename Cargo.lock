@@ -118,6 +118,7 @@ name = "brainhackrs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "boa_ast",
  "boa_parser",
 ]
 

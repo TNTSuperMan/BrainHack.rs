@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.102"
+boa_ast = "0.21.0"
 boa_parser = "0.21.0"
