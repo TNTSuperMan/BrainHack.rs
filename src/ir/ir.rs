@@ -25,7 +25,7 @@ pub enum IRStmt {
         init: Option<IRExpr>,
     },
     Assign {
-        id: String,
+        id: Identifier,
         value: IRExpr,
     },
     Call {
