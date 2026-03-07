@@ -1,4 +1,6 @@
 pub mod ir;
+mod stmt;
+mod expr;
 
 use std::path::Path;
 
@@ -13,6 +15,10 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let mut scope = Default::default();
     let script = parser.parse_script(&mut scope, &mut interner)?;
     println!("{script:?}");
+
+    for stmt in script.statements().iter() {
+        
+    }
     
     unimplemented!();
 }

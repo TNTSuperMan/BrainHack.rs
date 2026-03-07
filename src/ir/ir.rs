@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use boa_ast::expression::Identifier;
+
 pub enum IRExpr {
     Const(i8),
     Add(Box<IRExpr>, Box<IRExpr>),
@@ -17,9 +19,9 @@ pub enum IRExpr {
     },
 }
 
-pub enum IRStatement {
+pub enum IRStmt {
     VariableDefine {
-        id: String,
+        id: Identifier,
         init: Option<IRExpr>,
     },
     Assign {
@@ -32,25 +34,25 @@ pub enum IRStatement {
     },
     While {
         condition: IRExpr,
-        body: Box<IRStatement>,
+        body: Box<IRStmt>,
     },
     If {
         condition: IRExpr,
-        body: Box<IRStatement>,
-        else_body: Option<Box<IRStatement>>,
+        body: Box<IRStmt>,
+        else_body: Option<Box<IRStmt>>,
     },
     Block {
-        body: Vec<IRStatement>,
+        body: Vec<IRStmt>,
     },
 }
 
 pub struct IRFunc {
     args: Vec<String>,
-    code: Vec<IRStatement>,
+    code: Vec<IRStmt>,
     result: Option<IRExpr>,
 }
 
 pub struct IR {
-    main: Vec<IRStatement>,
+    main: Vec<IRStmt>,
     funcs: HashMap<String, IRFunc>,
 }
