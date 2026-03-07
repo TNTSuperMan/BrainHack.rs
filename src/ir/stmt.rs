@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, Statement, StatementListItem, declaration::Binding, expression::operator::assign::{AssignOp, AssignTarget}};
+use boa_ast::{Expression, Statement, StatementListItem, declaration::Binding, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}};
 
 use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt}};
 
@@ -48,6 +48,20 @@ pub fn parse_stmts(statements: &[StatementListItem]) -> Result<Vec<IRStmt>> {
                                         id: *id,
                                         args: call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>()?,
                                     })
+                                } else {
+                                    bail!("unsupport");
+                                }
+                            }
+                            Expression::Update(upd) => {
+                                if let UpdateTarget::Identifier(id) = upd.target() {
+                                    let id_expr = Box::new(IRExpr::Id(*id));
+                                    let one_expr = Box::new(IRExpr::Const(1));
+                                    ir.push(match upd.op() {
+                                        UpdateOp::IncrementPost |
+                                        UpdateOp::IncrementPre => IRStmt::Assign { id: *id, value: IRExpr::Add(id_expr, one_expr) },
+                                        UpdateOp::DecrementPost |
+                                        UpdateOp::DecrementPre => IRStmt::Assign { id: *id, value: IRExpr::Sub(id_expr, one_expr) },
+                                    });
                                 } else {
                                     bail!("unsupport");
                                 }
