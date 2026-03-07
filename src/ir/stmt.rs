@@ -3,6 +3,14 @@ use boa_ast::{Expression, Statement, StatementListItem, declaration::Binding, ex
 
 use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt}};
 
+fn parse_block(statement: &Statement) -> Result<Vec<IRStmt>> {
+    if let Statement::Block(block) = statement {
+        parse_stmts(block.statement_list().statements())
+    } else {
+        parse_stmts(&[StatementListItem::Statement(Box::new(statement.clone()))])
+    }
+}
+
 pub fn parse_stmts(statements: &[StatementListItem]) -> Result<Vec<IRStmt>> {
     let mut ir: Vec<IRStmt> = vec![];
     for statement in statements {
@@ -68,6 +76,26 @@ pub fn parse_stmts(statements: &[StatementListItem]) -> Result<Vec<IRStmt>> {
                             }
                             _ => bail!("unimp | unsupport"),
                         }
+                    }
+                    Statement::WhileLoop(whileloop) => {
+                        ir.push(IRStmt::While {
+                            condition: parse_expr(whileloop.condition())?,
+                            body: parse_block(whileloop.body())?,
+                        })
+                    }
+                    Statement::If(if_ast) => {
+                        ir.push(IRStmt::If {
+                            condition: parse_expr(if_ast.cond())?,
+                            body: parse_block(if_ast.body())?,
+                            else_body: if let Some(s) = if_ast.else_node() {
+                                Some(parse_block(s)?)
+                            } else {
+                                None
+                            },
+                        });
+                    }
+                    Statement::Block(block) => {
+                        ir.push(IRStmt::Block { body: parse_stmts(block.statement_list().statements())? });
                     }
                     _ => bail!("unimp")
                 }

@@ -34,12 +34,12 @@ pub enum IRStmt {
     },
     While {
         condition: IRExpr,
-        body: Box<IRStmt>,
+        body: Vec<IRStmt>,
     },
     If {
         condition: IRExpr,
-        body: Box<IRStmt>,
-        else_body: Option<Box<IRStmt>>,
+        body: Vec<IRStmt>,
+        else_body: Option<Vec<IRStmt>>,
     },
     Block {
         body: Vec<IRStmt>,
