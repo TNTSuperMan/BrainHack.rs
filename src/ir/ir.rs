@@ -8,9 +8,9 @@ pub enum IRExpr {
     Sub(Box<IRExpr>, Box<IRExpr>),
     Mul(Box<IRExpr>, Box<IRExpr>),
     Div(Box<IRExpr>, Box<IRExpr>),
-    Id(String),
+    Id(Identifier),
     Call {
-        name: String,
+        id: Identifier,
         args: Vec<IRExpr>,
     },
     Fetch {
@@ -29,7 +29,7 @@ pub enum IRStmt {
         value: IRExpr,
     },
     Call {
-        name: String,
+        id: Identifier,
         args: Vec<IRExpr>,
     },
     While {
