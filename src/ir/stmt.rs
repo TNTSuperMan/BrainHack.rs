@@ -42,6 +42,16 @@ pub fn parse_stmts(statements: &[StatementListItem]) -> Result<Vec<IRStmt>> {
                                     bail!("unsupport");
                                 }
                             }
+                            Expression::Call(call) => {
+                                if let Expression::Identifier(id) = call.function() {
+                                    ir.push(IRStmt::Call {
+                                        id: *id,
+                                        args: call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>()?,
+                                    })
+                                } else {
+                                    bail!("unsupport");
+                                }
+                            }
                             _ => bail!("unimp | unsupport"),
                         }
                     }
