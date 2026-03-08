@@ -1,21 +1,21 @@
 use anyhow::{Result, bail};
 use boa_ast::{Expression, Statement, declaration::{Binding, VarDeclaration}, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}, statement::iteration::ForLoopInitializer};
 
-use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt, IRVarInit}, stmt_item::parse_statement_item};
+use crate::ir::{ctx::ParserContext, expr::parse_expr, ir::{IRExpr, IRStmt, IRVarInit}, stmt_item::parse_statement_item};
 
-fn parse_block(statement: &Statement) -> Result<Vec<IRStmt>> {
+fn parse_block(ctx: &mut ParserContext, statement: &Statement) -> Result<Vec<IRStmt>> {
     if let Statement::Block(block) = statement {
         block.statement_list().iter().map(|s| {
-            parse_statement_item(s, None)
+            parse_statement_item(ctx, s)
         }).collect()
     } else {
-        parse_stmt(statement).map(|stmt| {
+        parse_stmt(ctx, statement).map(|stmt| {
             vec![stmt]
         })
     }
 }
 
-pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
+pub fn parse_stmt(ctx: &mut ParserContext, statement: &Statement) -> Result<IRStmt> {
     match statement {
         Statement::Var(var) => {
             var.0.as_ref().iter().map(|d| {
@@ -23,7 +23,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                     Ok(IRVarInit {
                         id: id.sym(),
                         init: if let Some(i) = d.init() {
-                            Some(parse_expr(i)?)
+                            Some(parse_expr(ctx, i)?)
                         } else {
                             None
                         },
@@ -39,7 +39,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
             match expr {
                 Expression::Assign(assign) => {
                     if let AssignTarget::Identifier(id) = assign.lhs() {
-                        let val = parse_expr(assign.rhs())?;
+                        let val = parse_expr(ctx, assign.rhs())?;
                         Ok(match assign.op() {
                             AssignOp::Assign => IRStmt::Assign { id: id.sym(), value: val },
                             AssignOp::Add => IRStmt::Assign { id: id.sym(), value: IRExpr::Add(Box::new(IRExpr::Id { id: id.sym(), last_use: false }), Box::new(val)) },
@@ -54,7 +54,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                 }
                 Expression::Call(call) => {
                     if let Expression::Identifier(id) = call.function() {
-                        call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
+                        call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
                             IRStmt::Call {
                                 id: id.sym(),
                                 args,
@@ -83,45 +83,45 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
         }
         Statement::WhileLoop(whileloop) => {
             Ok(IRStmt::While {
-                condition: parse_expr(whileloop.condition())?,
-                body: parse_block(whileloop.body())?,
+                condition: parse_expr(ctx, whileloop.condition())?,
+                body: parse_block(ctx, whileloop.body())?,
             })
         }
         Statement::If(if_ast) => {
             Ok(IRStmt::If {
-                condition: parse_expr(if_ast.cond())?,
-                body: parse_block(if_ast.body())?,
+                condition: parse_expr(ctx, if_ast.cond())?,
+                body: parse_block(ctx, if_ast.body())?,
                 else_body: if let Some(s) = if_ast.else_node() {
-                    Some(parse_block(s)?)
+                    Some(parse_block(ctx, s)?)
                 } else {
                     None
                 },
             })
         }
         Statement::Block(_) => {
-            Ok(IRStmt::Block { body: parse_block(statement)? })
+            Ok(IRStmt::Block { body: parse_block(ctx, statement)? })
         }
         Statement::ForLoop(for_ast) => {
             let mut body: Vec<IRStmt> = vec![];
 
             if let Some(init) = for_ast.init() {
-                body.push(match init {
-                    ForLoopInitializer::Var(var) => parse_stmt(&Statement::Var(var.clone()))?,
-                    ForLoopInitializer::Lexical(lex) => parse_stmt(&Statement::Var(VarDeclaration(lex.declaration().variable_list().clone())))?,
-                    ForLoopInitializer::Expression(expr) => parse_stmt(&Statement::Expression(expr.clone()))?,
-                });
+                body.push(parse_stmt(ctx, &match init {
+                    ForLoopInitializer::Var(var) => Statement::Var(var.clone()),
+                    ForLoopInitializer::Lexical(lex) => Statement::Var(VarDeclaration(lex.declaration().variable_list().clone())),
+                    ForLoopInitializer::Expression(expr) => Statement::Expression(expr.clone()),
+                })?);
             }
 
-            let mut loop_body = parse_block(for_ast.body())?;
+            let mut loop_body = parse_block(ctx, for_ast.body())?;
 
             if let Some(upd) = for_ast.final_expr() {
-                loop_body.push(parse_stmt(&Statement::Expression(upd.clone()))?);
+                loop_body.push(parse_stmt(ctx, &Statement::Expression(upd.clone()))?);
             }
 
             body.push(IRStmt::While {
                 condition: for_ast.condition().map_or(
                     Ok(IRExpr::Const(1)),
-                    parse_expr
+                    |e| parse_expr(ctx, e)
                 )?,
                 body: loop_body,
             });

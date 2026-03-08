@@ -1,9 +1,9 @@
 use anyhow::{Result, bail};
 use boa_ast::{Expression, expression::{literal::LiteralKind, operator::binary::{ArithmeticOp, BinaryOp}}};
 
-use crate::ir::ir::IRExpr;
+use crate::ir::{ctx::ParserContext, ir::IRExpr};
 
-pub fn parse_expr(expr: &Expression) -> Result<IRExpr> {
+pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> {
     match expr {
         Expression::Literal(literal) => {
             match literal.kind() {
@@ -13,8 +13,8 @@ pub fn parse_expr(expr: &Expression) -> Result<IRExpr> {
             }
         }
         Expression::Binary(binary) => {
-            let left = Box::new(parse_expr(binary.lhs())?);
-            let right = Box::new(parse_expr(binary.rhs())?);
+            let left = Box::new(parse_expr(ctx, binary.lhs())?);
+            let right = Box::new(parse_expr(ctx, binary.rhs())?);
             Ok(match binary.op() {
                 BinaryOp::Arithmetic(ArithmeticOp::Add) => IRExpr::Add(left, right),
                 BinaryOp::Arithmetic(ArithmeticOp::Sub) => IRExpr::Sub(left, right),
@@ -28,7 +28,7 @@ pub fn parse_expr(expr: &Expression) -> Result<IRExpr> {
         }
         Expression::Call(call) => {
             if let Expression::Identifier(id) = call.function() {
-                call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
+                call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
                     IRExpr::Call {
                         id: id.sym(),
                         args,

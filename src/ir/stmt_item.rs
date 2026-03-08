@@ -1,28 +1,29 @@
-use std::collections::HashMap;
-
 use anyhow::{Result, bail};
 use boa_ast::{Declaration, Statement, StatementListItem, declaration::{Binding, VarDeclaration}};
 use boa_interner::Sym;
 
-use crate::ir::{expr::parse_expr, ir::{IRExpr, IRFunc, IRStmt}, stmt::parse_stmt};
+use crate::ir::{ctx::ParserContext, expr::parse_expr, ir::{IRExpr, IRFunc, IRStmt}, stmt::parse_stmt};
 
-pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut HashMap<Sym, IRFunc>>) -> Result<IRStmt> {
+pub fn parse_statement_item(ctx: &mut ParserContext, statement: &StatementListItem) -> Result<IRStmt> {
     match statement {
-        StatementListItem::Statement(stmt) => parse_stmt(stmt.as_ref()),
+        StatementListItem::Statement(stmt) => parse_stmt(ctx, stmt.as_ref()),
         StatementListItem::Declaration(decr) => {
             match decr.as_ref() {
                 Declaration::Lexical(lex) => {
-                    parse_stmt(&Statement::Var(VarDeclaration(lex.variable_list().clone())))
+                    parse_stmt(ctx, &Statement::Var(VarDeclaration(lex.variable_list().clone())))
                 }
                 Declaration::FunctionDeclaration(func) => {
-                    if let Some(funcs) = func_map {
+                    if let Some(funcs) = &mut ctx.funcs {
                         let mut body = func.body().statements().to_vec();
                         let mut result: Option<IRExpr> = None;
 
                         if let Some(StatementListItem::Statement(s)) = func.body().statements().last() {
                             if let Statement::Return(ret) = s.as_ref() {
                                 if let Some(r) = ret.target() {
-                                    result = Some(parse_expr(r)?);
+                                    result = Some(parse_expr(&mut ParserContext {
+                                        interner: ctx.interner,
+                                        funcs: None
+                                    }, r)?);
                                     body.pop();
                                 }
                             }
@@ -42,7 +43,10 @@ pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut
                                 }
                             }).collect::<Result<Vec<Sym>>>()?,
                             code: body.iter().map(|statement| {
-                                parse_statement_item(statement, None)
+                                parse_statement_item(&mut ParserContext {
+                                    interner: ctx.interner,
+                                    funcs: None
+                                }, statement)
                             }).collect::<Result<Vec<IRStmt>>>()?,
                             result,
                         });

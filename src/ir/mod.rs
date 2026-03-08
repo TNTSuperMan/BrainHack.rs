@@ -2,6 +2,7 @@ pub mod ir;
 mod stmt;
 mod stmt_item;
 mod expr;
+mod ctx;
 
 use std::{collections::HashMap, path::Path};
 
@@ -9,7 +10,7 @@ use anyhow::{Result};
 use boa_interner::Sym;
 use boa_parser::{Parser, Source};
 
-use crate::ir::{ir::{IR, IRFunc, IRStmt}, stmt_item::parse_statement_item};
+use crate::ir::{ctx::ParserContext, ir::{IR, IRFunc, IRStmt}, stmt_item::parse_statement_item};
 
 pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let mut parser = Parser::new(Source::from_filepath(fpath)?);
@@ -21,7 +22,10 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     
     Ok(IR {
         main: script.statements().iter().map(|s| {
-            parse_statement_item(s, Some(&mut funcs))
+            parse_statement_item(&mut ParserContext {
+                interner: &interner,
+                funcs: Some(&mut funcs),
+            }, s)
         }).collect::<Result<Vec<IRStmt>>>()?,
         funcs,
     })
