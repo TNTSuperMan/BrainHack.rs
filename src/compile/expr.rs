@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use anyhow::{Result, bail};
+use anyhow::{Result, anyhow, bail};
 use boa_interner::Sym;
 
-use crate::{asm::asm::AssemblyOp, compile::ctx::CompileContext, ir::ir::{IRExpr, IRFunc}};
+use crate::{asm::asm::AssemblyOp, compile::{ctx::CompileContext, stmt::compile_stmts}, ir::ir::{IRExpr, IRFunc}};
 
 pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, target: usize, expr: &IRExpr) -> Result<Vec<AssemblyOp>> {
     let mut asm: Vec<AssemblyOp> = vec![];
@@ -38,6 +38,24 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
             asm.push(AssemblyOp::Move(ptr, vec![(tmp, 1)]));
             asm.push(AssemblyOp::Move(tmp, vec![(ptr, 1), (target, 1)]));
             ctx.free(tmp)?;
+        }
+        IRExpr::Call { id, args } => {
+            let func = funcs.get(id).ok_or_else(|| anyhow!("Undefined function detected"))?;
+            if func.args.len() != args.len() {
+                bail!("Function args length mismatch");
+            }
+            ctx.push();
+
+            for (i, arg) in func.args.iter().enumerate() {
+                let ptr = ctx.alloc(*arg);
+                asm.append(&mut compile_expr(ctx, funcs, ptr, &args[i])?);
+            }
+
+            asm.append(&mut compile_stmts(ctx, funcs, &func.code)?);
+
+            asm.append(&mut compile_expr(ctx, funcs, target, func.result.as_ref().unwrap_or_else(|| &IRExpr::Const(0)))?);
+
+            ctx.pop();
         }
         
         IRExpr::Input => {
