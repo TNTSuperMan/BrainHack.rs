@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, expression::{literal::LiteralKind, operator::binary::{ArithmeticOp, BinaryOp}}};
+use boa_ast::{Expression, expression::{literal::LiteralKind, operator::binary::{ArithmeticOp, BinaryOp, RelationalOp}}};
 
 use crate::ir::{ctx::ParserContext, ir::IRExpr};
 
@@ -20,6 +20,14 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 BinaryOp::Arithmetic(ArithmeticOp::Sub) => IRExpr::Sub(left, right),
                 BinaryOp::Arithmetic(ArithmeticOp::Mul) => IRExpr::Mul(left, right),
                 BinaryOp::Arithmetic(ArithmeticOp::Div) => IRExpr::Div(left, right),
+                BinaryOp::Relational(RelationalOp::Equal) |
+                BinaryOp::Relational(RelationalOp::StrictEqual) => IRExpr::BoolNot(Box::new(IRExpr::Sub(left, right))),
+                BinaryOp::Relational(RelationalOp::NotEqual) |
+                BinaryOp::Relational(RelationalOp::StrictNotEqual) => IRExpr::Sub(left, right),
+                BinaryOp::Relational(RelationalOp::GreaterThan) => IRExpr::Gt(left, right),
+                BinaryOp::Relational(RelationalOp::LessThan) => IRExpr::Gt(right, left),
+                BinaryOp::Relational(RelationalOp::GreaterThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(right, left))),
+                BinaryOp::Relational(RelationalOp::LessThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(left, right))),
                 _ => bail!("unsupport"),
             })
         }

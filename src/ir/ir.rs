@@ -22,6 +22,9 @@ pub enum IRExpr {
         index: usize,
     },
     Input,
+
+    BoolNot(Box<IRExpr>),
+    Gt(Box<IRExpr>, Box<IRExpr>), // >
 }
 
 #[derive(Clone, Debug)]
