@@ -45,6 +45,12 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
 
                 ctx.pop();
             }
+            IRStmt::Out { val } => {
+                let val_p = ctx.alloc_noname();
+                asm.append(&mut compile_expr(ctx, funcs, val_p, val)?);
+                asm.push(AssemblyOp::Out(val_p));
+                ctx.free(val_p)?;
+            }
             _ => bail!("todo"),
         }
     }

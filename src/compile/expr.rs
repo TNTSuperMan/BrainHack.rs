@@ -39,6 +39,10 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
             asm.push(AssemblyOp::Move(tmp, vec![(ptr, 1), (target, 1)]));
             ctx.free(tmp)?;
         }
+        
+        IRExpr::Input => {
+            asm.push(AssemblyOp::In(target));
+        }
 
         _ => bail!("todo")
     }
