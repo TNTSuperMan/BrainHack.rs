@@ -6,7 +6,6 @@ use boa_interner::Sym;
 use crate::{asm::asm::AssemblyOp, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
 
 pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AssemblyOp>> {
-    ctx.push();
     let mut asm: Vec<AssemblyOp> = vec![];
 
     for stmt in stmts {
@@ -55,6 +54,5 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
         }
     }
 
-    ctx.pop();
     Ok(asm)
 }

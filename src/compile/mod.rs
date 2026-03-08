@@ -9,7 +9,11 @@ use crate::{asm::asm::AssemblyProgram, compile::{ctx::CompileContext, stmt::comp
 pub fn compile(ir: &IR) -> Result<AssemblyProgram> {
     let mut ctx = CompileContext::new();
 
+    ctx.push();
+
     let code = compile_stmts(&mut ctx, &ir.funcs, &ir.main)?;
+
+    ctx.pop();
 
     Ok(AssemblyProgram {
         static_memory_size: ctx.max_usage,
