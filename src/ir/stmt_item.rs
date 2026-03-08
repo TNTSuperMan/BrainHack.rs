@@ -41,11 +41,7 @@ pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut
                                 }
                             }).collect::<Result<Vec<Identifier>>>()?,
                             code: body.iter().map(|statement| {
-                                if let StatementListItem::Statement(s) = statement {
-                                    parse_stmt(s.as_ref())
-                                } else {
-                                    bail!("Unsupported declaration detected in function");
-                                }
+                                parse_statement_item(statement, None)
                             }).collect::<Result<Vec<IRStmt>>>()?,
                             result,
                         });
