@@ -1,3 +1,5 @@
+mod ctx;
+
 use anyhow::{Result, bail};
 
 use crate::{asm::asm::AssemblyProgram, ir::ir::IR};
