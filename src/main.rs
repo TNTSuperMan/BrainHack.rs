@@ -1,5 +1,6 @@
 mod asm;
 mod ir;
+mod compile;
 
 use std::path::Path;
 
