@@ -19,6 +19,7 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let script = parser.parse_script(&mut scope, &mut interner)?;
 
     interner.get_or_intern("out");
+    interner.get_or_intern("input");
 
     let mut funcs = HashMap::<Sym, IRFunc>::new();
     
