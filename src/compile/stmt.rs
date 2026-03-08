@@ -29,6 +29,10 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 ctx.free(val_p)?;
             }
             IRStmt::Call { id, args } => {
+                if ctx.callstack.contains(id) {
+                    bail!("Recursive call detected");
+                }
+                ctx.callstack.push(*id);
                 let func = funcs.get(id).ok_or_else(|| anyhow!("Undefined function detected"))?;
                 if func.args.len() != args.len() {
                     bail!("Function args length mismatch");
