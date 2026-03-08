@@ -28,6 +28,7 @@ pub struct IRVarInit {
 
 #[derive(Clone, Debug)]
 pub enum IRStmt {
+    Noop,
     VariableDefine {
         vars: Vec<IRVarInit>,
     },

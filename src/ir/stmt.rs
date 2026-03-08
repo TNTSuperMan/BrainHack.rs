@@ -1,16 +1,12 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, Statement, StatementListItem, declaration::Binding, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}, statement::iteration::ForLoopInitializer};
+use boa_ast::{Expression, Statement, declaration::Binding, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}, statement::iteration::ForLoopInitializer};
 
-use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt, IRVarInit}};
+use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt, IRVarInit}, stmt_item::parse_statement_item};
 
 fn parse_block(statement: &Statement) -> Result<Vec<IRStmt>> {
     if let Statement::Block(block) = statement {
         block.statement_list().iter().map(|s| {
-            if let StatementListItem::Statement(stmt) = s {
-                parse_stmt(&stmt)
-            } else {
-                bail!("unsupport");
-            }
+            parse_statement_item(s, None)
         }).collect()
     } else {
         parse_stmt(statement).map(|stmt| {
