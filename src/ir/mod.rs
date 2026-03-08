@@ -70,5 +70,5 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
         }
     }
     
-    unimplemented!();
+    Ok(ir)
 }
