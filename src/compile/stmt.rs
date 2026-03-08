@@ -1,4 +1,4 @@
-use std::{collections::HashMap, thread::scope};
+use std::collections::HashMap;
 
 use anyhow::{Result, anyhow, bail};
 use boa_interner::Sym;
