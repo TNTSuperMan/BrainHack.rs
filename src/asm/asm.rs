@@ -2,13 +2,13 @@ use crate::asm::{block::assemble_block, ctx::AssembleContext};
 
 type Pointer = usize;
 
-pub enum AssemblyOp {
+pub enum AsmOp {
     Move(Pointer, Vec<(Pointer, i8)>),
     Set(Pointer, i8),
     Add(Pointer, i8),
     Out(Pointer),
     In(Pointer),
-    Loop(Pointer, Vec<AssemblyOp>),
+    Loop(Pointer, Vec<AsmOp>),
     Fetch(usize),
     Send(usize),
 }
@@ -16,7 +16,7 @@ pub enum AssemblyOp {
 pub struct AssemblyProgram {
     pub static_memory_size: usize,
     pub dynamic_memory_block_size: usize,
-    pub code: Vec<AssemblyOp>,
+    pub code: Vec<AsmOp>,
 }
 
 impl AssemblyProgram {

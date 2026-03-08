@@ -1,4 +1,4 @@
-use crate::asm::{asm::AssemblyOp, ctx::AssembleContext};
+use crate::asm::{asm::AsmOp, ctx::AssembleContext};
 
 struct AddrMap {
     block: usize,
@@ -16,10 +16,10 @@ impl AddrMap {
     }
 }
 
-pub fn assemble_block(ctx: &mut AssembleContext, block: &[AssemblyOp]) {
+pub fn assemble_block(ctx: &mut AssembleContext, block: &[AsmOp]) {
     for op in block {
         match op {
-            AssemblyOp::Move(source, dests) => {
+            AsmOp::Move(source, dests) => {
                 ctx.go(*source);
                 ctx.push("[-");
                 for &(dest_ptr, dest_val) in dests {
@@ -29,31 +29,31 @@ pub fn assemble_block(ctx: &mut AssembleContext, block: &[AssemblyOp]) {
                 ctx.go(*source);
                 ctx.push("]");
             }
-            AssemblyOp::Set(ptr, val) => {
+            AsmOp::Set(ptr, val) => {
                 ctx.go(*ptr);
                 ctx.push("[-]");
                 ctx.add(*val);
             }
-            AssemblyOp::Add(ptr, val) => {
+            AsmOp::Add(ptr, val) => {
                 ctx.go(*ptr);
                 ctx.add(*val);
             }
-            AssemblyOp::Out(ptr) => {
+            AsmOp::Out(ptr) => {
                 ctx.go(*ptr);
                 ctx.push(".");
             }
-            AssemblyOp::In(ptr) => {
+            AsmOp::In(ptr) => {
                 ctx.go(*ptr);
                 ctx.push(",");
             }
-            AssemblyOp::Loop(condition, block) => {
+            AsmOp::Loop(condition, block) => {
                 ctx.go(*condition);
                 ctx.push("[");
                 assemble_block(ctx, block);
                 ctx.go(*condition);
                 ctx.push("]");
             }
-            AssemblyOp::Fetch(index) => {
+            AsmOp::Fetch(index) => {
                 let AddrMap { block, addr, temp } = AddrMap::new(ctx.st(), ctx.dy());
 
                 // 目的地に移動
@@ -113,7 +113,7 @@ pub fn assemble_block(ctx: &mut AssembleContext, block: &[AssemblyOp]) {
                 ctx.go(addr - block); // ズラす
                 ctx.push("]");
             }
-            AssemblyOp::Send(index) => {
+            AsmOp::Send(index) => {
                 let AddrMap { block, addr, temp } = AddrMap::new(ctx.st(), ctx.dy());
 
                 // 目的地に移動

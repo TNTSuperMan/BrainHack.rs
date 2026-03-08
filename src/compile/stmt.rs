@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use anyhow::{Result, anyhow, bail};
 use boa_interner::Sym;
 
-use crate::{asm::asm::AssemblyOp, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
+use crate::{asm::asm::AsmOp, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
 
-pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AssemblyOp>> {
-    let mut asm: Vec<AssemblyOp> = vec![];
+pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AsmOp>> {
+    let mut asm: Vec<AsmOp> = vec![];
 
     macro_rules! expr {
         ($target: expr, $expr: expr) => {
@@ -30,7 +30,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
 
                 expr!(val_p, value);
                 let ptr = ctx.get(*id)?;
-                asm.push(AssemblyOp::Move(val_p, vec![(ptr, 1)]));
+                asm.push(AsmOp::Move(val_p, vec![(ptr, 1)]));
                 
                 ctx.free(val_p)?;
             }
@@ -57,7 +57,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
             IRStmt::Out { val } => {
                 let val_p = ctx.alloc_noname();
                 asm.append(&mut compile_expr(ctx, funcs, val_p, val)?);
-                asm.push(AssemblyOp::Out(val_p));
+                asm.push(AsmOp::Out(val_p));
                 ctx.free(val_p)?;
             }
             IRStmt::While { condition, body } => {
@@ -69,7 +69,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 let mut asm_body = compile_stmts(ctx, funcs, body)?;
                 ctx.pop();
                 asm_body.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
-                asm.push(AssemblyOp::Loop(cond_p, asm_body));
+                asm.push(AsmOp::Loop(cond_p, asm_body));
 
                 ctx.free(cond_p)?;
             }
@@ -78,20 +78,20 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                     let cond_p = ctx.alloc_noname();
                     let else_p = ctx.alloc_noname();
 
-                    asm.push(AssemblyOp::Set(else_p, 1));
+                    asm.push(AsmOp::Set(else_p, 1));
                     expr!(cond_p, condition);
                     ctx.push();
                     let mut asm_body = compile_stmts(ctx, funcs, body)?;
                     ctx.pop();
-                    asm_body.push(AssemblyOp::Set(cond_p, 0));
-                    asm_body.push(AssemblyOp::Set(else_p, 0));
-                    asm.push(AssemblyOp::Loop(cond_p, asm_body));
+                    asm_body.push(AsmOp::Set(cond_p, 0));
+                    asm_body.push(AsmOp::Set(else_p, 0));
+                    asm.push(AsmOp::Loop(cond_p, asm_body));
 
                     ctx.push();
                     let mut asm_body = compile_stmts(ctx, funcs, else_b)?;
                     ctx.pop();
-                    asm_body.push(AssemblyOp::Set(else_p, 0));
-                    asm.push(AssemblyOp::Loop(else_p, asm_body));
+                    asm_body.push(AsmOp::Set(else_p, 0));
+                    asm.push(AsmOp::Loop(else_p, asm_body));
 
                     ctx.free(else_p)?;
                     ctx.free(cond_p)?;
@@ -102,8 +102,8 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                     ctx.push();
                     let mut asm_body = compile_stmts(ctx, funcs, body)?;
                     ctx.pop();
-                    asm_body.push(AssemblyOp::Set(cond_p, 0));
-                    asm.push(AssemblyOp::Loop(cond_p, asm_body));
+                    asm_body.push(AsmOp::Set(cond_p, 0));
+                    asm.push(AsmOp::Loop(cond_p, asm_body));
 
                     ctx.free(cond_p)?;
                 }
