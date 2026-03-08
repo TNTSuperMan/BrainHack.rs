@@ -3,17 +3,21 @@ use std::collections::HashMap;
 use anyhow::{Result, bail};
 use boa_ast::expression::Identifier;
 
-pub struct CompileContext {
+use crate::ir::ir::IRFunc;
+
+pub struct CompileContext<'a> {
     pub usage: usize,
     pub callstack: Vec<Identifier>,
     pub var_map: Vec<(usize, HashMap<Identifier, usize>)>,
+    pub funcs: &'a HashMap<Identifier, IRFunc>,
 }
-impl CompileContext {
-    pub fn new() -> CompileContext {
+impl<'a> CompileContext<'a> {
+    pub fn new(funcs: &'a HashMap<Identifier, IRFunc>) -> CompileContext<'a> {
         CompileContext {
             usage: 0,
             callstack: vec![],
             var_map: vec![],
+            funcs,
         }
     }
     pub fn push(&mut self) {
