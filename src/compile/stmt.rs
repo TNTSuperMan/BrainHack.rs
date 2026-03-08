@@ -107,7 +107,6 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 asm.append(&mut compile_stmts(ctx, funcs, body)?);
                 ctx.pop();
             }
-            _ => bail!("todo"),
         }
     }
 
