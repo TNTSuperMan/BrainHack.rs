@@ -7,7 +7,9 @@ fn parse_block(statement: &Statement) -> Result<Vec<IRStmt>> {
     if let Statement::Block(block) = statement {
         block.statement_list().iter().map(parse_stmt).collect()
     } else {
-        Ok(vec![parse_stmt(&StatementListItem::Statement(Box::new(statement.clone())))?])
+        parse_stmt(&StatementListItem::Statement(Box::new(statement.clone()))).map(|stmt| {
+            vec![stmt]
+        })
     }
 }
 
@@ -16,7 +18,7 @@ pub fn parse_stmt(statement: &StatementListItem) -> Result<IRStmt> {
         StatementListItem::Statement(stmt) => {
             match stmt.as_ref() {
                 Statement::Var(var) => {
-                    let vars: Result<Vec<IRVarInit>> = var.0.as_ref().iter().map(|d| {
+                    var.0.as_ref().iter().map(|d| {
                         if let Binding::Identifier(id) = d.binding() {
                             Ok(IRVarInit {
                                 id: *id,
@@ -29,8 +31,9 @@ pub fn parse_stmt(statement: &StatementListItem) -> Result<IRStmt> {
                         } else {
                             bail!("unsupport");
                         }
-                    }).collect();
-                    Ok(IRStmt::VariableDefine { vars: vars? })
+                    }).collect::<Result<Vec<IRVarInit>>>().map(|vars| {
+                        IRStmt::VariableDefine { vars }
+                    })
                 }
                 Statement::Expression(expr) => {
                     match expr {
@@ -51,9 +54,11 @@ pub fn parse_stmt(statement: &StatementListItem) -> Result<IRStmt> {
                         }
                         Expression::Call(call) => {
                             if let Expression::Identifier(id) = call.function() {
-                                Ok(IRStmt::Call {
-                                    id: *id,
-                                    args: call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>()?,
+                                call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
+                                    IRStmt::Call {
+                                        id: *id,
+                                        args,
+                                    }
                                 })
                             } else {
                                 bail!("unsupport");
