@@ -19,10 +19,14 @@ pub enum IRExpr {
     },
 }
 
+pub struct IRVarInit {
+    pub id: Identifier,
+    pub init: Option<IRExpr>,
+}
+
 pub enum IRStmt {
     VariableDefine {
-        id: Identifier,
-        init: Option<IRExpr>,
+        vars: Vec<IRVarInit>,
     },
     Assign {
         id: Identifier,
