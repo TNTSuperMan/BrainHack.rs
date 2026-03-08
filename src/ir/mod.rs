@@ -6,7 +6,7 @@ mod expr;
 use std::{collections::HashMap, path::Path};
 
 use anyhow::{Result};
-use boa_ast::expression::Identifier;
+use boa_interner::Sym;
 use boa_parser::{Parser, Source};
 
 use crate::ir::{ir::{IR, IRFunc, IRStmt}, stmt_item::parse_statement_item};
@@ -17,7 +17,7 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let mut scope = Default::default();
     let script = parser.parse_script(&mut scope, &mut interner)?;
 
-    let mut funcs = HashMap::<Identifier, IRFunc>::new();
+    let mut funcs = HashMap::<Sym, IRFunc>::new();
     
     Ok(IR {
         main: script.statements().iter().map(|s| {

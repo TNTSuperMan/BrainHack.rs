@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use boa_ast::expression::Identifier;
+use boa_interner::Sym;
 
 #[derive(Clone, Debug)]
 pub enum IRExpr {
@@ -10,11 +10,11 @@ pub enum IRExpr {
     Mul(Box<IRExpr>, Box<IRExpr>),
     Div(Box<IRExpr>, Box<IRExpr>),
     Id {
-        id: Identifier,
+        id: Sym,
         last_use: bool,
     },
     Call {
-        id: Identifier,
+        id: Sym,
         args: Vec<IRExpr>,
     },
     Fetch {
@@ -25,7 +25,7 @@ pub enum IRExpr {
 
 #[derive(Clone, Debug)]
 pub struct IRVarInit {
-    pub id: Identifier,
+    pub id: Sym,
     pub init: Option<IRExpr>,
 }
 
@@ -36,11 +36,11 @@ pub enum IRStmt {
         vars: Vec<IRVarInit>,
     },
     Assign {
-        id: Identifier,
+        id: Sym,
         value: IRExpr,
     },
     Call {
-        id: Identifier,
+        id: Sym,
         args: Vec<IRExpr>,
     },
     While {
@@ -59,7 +59,7 @@ pub enum IRStmt {
 
 #[derive(Clone, Debug)]
 pub struct IRFunc {
-    pub args: Vec<Identifier>,
+    pub args: Vec<Sym>,
     pub code: Vec<IRStmt>,
     pub result: Option<IRExpr>,
 }
@@ -67,5 +67,5 @@ pub struct IRFunc {
 #[derive(Clone, Debug)]
 pub struct IR {
     pub main: Vec<IRStmt>,
-    pub funcs: HashMap<Identifier, IRFunc>,
+    pub funcs: HashMap<Sym, IRFunc>,
 }

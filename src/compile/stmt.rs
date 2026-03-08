@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use anyhow::{Result, anyhow, bail};
-use boa_ast::expression::Identifier;
+use boa_interner::Sym;
 
 use crate::{asm::asm::AssemblyOp, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
 
-pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Identifier, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AssemblyOp>> {
+pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AssemblyOp>> {
     ctx.push();
     let mut asm: Vec<AssemblyOp> = vec![];
 

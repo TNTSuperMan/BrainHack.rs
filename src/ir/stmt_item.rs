@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use anyhow::{Result, bail};
-use boa_ast::{Declaration, Statement, StatementListItem, declaration::{Binding, VarDeclaration}, expression::Identifier};
+use boa_ast::{Declaration, Statement, StatementListItem, declaration::{Binding, VarDeclaration}};
+use boa_interner::Sym;
 
 use crate::ir::{expr::parse_expr, ir::{IRExpr, IRFunc, IRStmt}, stmt::parse_stmt};
 
-pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut HashMap<Identifier, IRFunc>>) -> Result<IRStmt> {
+pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut HashMap<Sym, IRFunc>>) -> Result<IRStmt> {
     match statement {
         StatementListItem::Statement(stmt) => parse_stmt(stmt.as_ref()),
         StatementListItem::Declaration(decr) => {
@@ -26,7 +27,7 @@ pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut
                                 }
                             }
                         }
-                        funcs.insert(func.name(), IRFunc {
+                        funcs.insert(func.name().sym(), IRFunc {
                             args: func.parameters().as_ref().iter().map(|p| {
                                 if p.is_rest_param() {
                                     bail!("Unsupported spread argument detected");
@@ -35,11 +36,11 @@ pub fn parse_statement_item(statement: &StatementListItem, func_map: Option<&mut
                                     bail!("Unimplemented argument init detected");
                                 }
                                 if let Binding::Identifier(id) = p.variable().binding() {
-                                    Ok(*id)
+                                    Ok(id.sym())
                                 } else {
                                     bail!("Unsupported argument detected");
                                 }
-                            }).collect::<Result<Vec<Identifier>>>()?,
+                            }).collect::<Result<Vec<Sym>>>()?,
                             code: body.iter().map(|statement| {
                                 parse_statement_item(statement, None)
                             }).collect::<Result<Vec<IRStmt>>>()?,

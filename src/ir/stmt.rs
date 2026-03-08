@@ -21,7 +21,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
             var.0.as_ref().iter().map(|d| {
                 if let Binding::Identifier(id) = d.binding() {
                     Ok(IRVarInit {
-                        id: *id,
+                        id: id.sym(),
                         init: if let Some(i) = d.init() {
                             Some(parse_expr(i)?)
                         } else {
@@ -41,11 +41,11 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                     if let AssignTarget::Identifier(id) = assign.lhs() {
                         let val = parse_expr(assign.rhs())?;
                         Ok(match assign.op() {
-                            AssignOp::Assign => IRStmt::Assign { id: *id, value: val },
-                            AssignOp::Add => IRStmt::Assign { id: *id, value: IRExpr::Add(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
-                            AssignOp::Sub => IRStmt::Assign { id: *id, value: IRExpr::Sub(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
-                            AssignOp::Mul => IRStmt::Assign { id: *id, value: IRExpr::Mul(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
-                            AssignOp::Div => IRStmt::Assign { id: *id, value: IRExpr::Div(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
+                            AssignOp::Assign => IRStmt::Assign { id: id.sym(), value: val },
+                            AssignOp::Add => IRStmt::Assign { id: id.sym(), value: IRExpr::Add(Box::new(IRExpr::Id { id: id.sym(), last_use: false }), Box::new(val)) },
+                            AssignOp::Sub => IRStmt::Assign { id: id.sym(), value: IRExpr::Sub(Box::new(IRExpr::Id { id: id.sym(), last_use: false }), Box::new(val)) },
+                            AssignOp::Mul => IRStmt::Assign { id: id.sym(), value: IRExpr::Mul(Box::new(IRExpr::Id { id: id.sym(), last_use: false }), Box::new(val)) },
+                            AssignOp::Div => IRStmt::Assign { id: id.sym(), value: IRExpr::Div(Box::new(IRExpr::Id { id: id.sym(), last_use: false }), Box::new(val)) },
                             _ => bail!("Unsupported assignment detected"),
                         })
                     } else {
@@ -56,7 +56,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                     if let Expression::Identifier(id) = call.function() {
                         call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
                             IRStmt::Call {
-                                id: *id,
+                                id: id.sym(),
                                 args,
                             }
                         })
@@ -66,13 +66,13 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                 }
                 Expression::Update(upd) => {
                     if let UpdateTarget::Identifier(id) = upd.target() {
-                        let id_expr = Box::new(IRExpr::Id { id: *id, last_use: false });
+                        let id_expr = Box::new(IRExpr::Id { id: id.sym(), last_use: false });
                         let one_expr = Box::new(IRExpr::Const(1));
                         Ok(match upd.op() {
                             UpdateOp::IncrementPost |
-                            UpdateOp::IncrementPre => IRStmt::Assign { id: *id, value: IRExpr::Add(id_expr, one_expr) },
+                            UpdateOp::IncrementPre => IRStmt::Assign { id: id.sym(), value: IRExpr::Add(id_expr, one_expr) },
                             UpdateOp::DecrementPost |
-                            UpdateOp::DecrementPre => IRStmt::Assign { id: *id, value: IRExpr::Sub(id_expr, one_expr) },
+                            UpdateOp::DecrementPre => IRStmt::Assign { id: id.sym(), value: IRExpr::Sub(id_expr, one_expr) },
                         })
                     } else {
                         bail!("Unsupported update target detected");

@@ -24,13 +24,13 @@ pub fn parse_expr(expr: &Expression) -> Result<IRExpr> {
             })
         }
         Expression::Identifier(id) => {
-            Ok(IRExpr::Id { id: *id, last_use: false })
+            Ok(IRExpr::Id { id: id.sym(), last_use: false })
         }
         Expression::Call(call) => {
             if let Expression::Identifier(id) = call.function() {
                 call.args().iter().map(|e| parse_expr(e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
                     IRExpr::Call {
-                        id: *id,
+                        id: id.sym(),
                         args,
                     }
                 })
