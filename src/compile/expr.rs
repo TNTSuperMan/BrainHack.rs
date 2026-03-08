@@ -8,25 +8,31 @@ use crate::{asm::asm::AssemblyOp, compile::{ctx::CompileContext, stmt::compile_s
 pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, target: usize, expr: &IRExpr) -> Result<Vec<AssemblyOp>> {
     let mut asm: Vec<AssemblyOp> = vec![];
     ctx.push();
+
+    macro_rules! expr {
+        ($target: expr, $expr: expr) => {
+            asm.append(&mut compile_expr(ctx, funcs, $target, $expr)?);
+        };
+    }
     
     match expr {
         IRExpr::Const(c) => {
             asm.push(AssemblyOp::Set(target, *c));
         }
         IRExpr::Add(l, r) => {
-            asm.append(&mut compile_expr(ctx, funcs, target, l.as_ref())?);
+            expr!(target, l.as_ref());
             
             let rp = ctx.alloc_noname();
-            asm.append(&mut compile_expr(ctx, funcs, rp, r.as_ref())?);
+            expr!(rp, r.as_ref());
 
             asm.push(AssemblyOp::Move(rp, vec![(target, 1)]));
             ctx.free(rp)?;
         }
         IRExpr::Sub(l, r) => {
-            asm.append(&mut compile_expr(ctx, funcs, target, l.as_ref())?);
+            expr!(target, l.as_ref());
             
             let rp = ctx.alloc_noname();
-            asm.append(&mut compile_expr(ctx, funcs, rp, r.as_ref())?);
+            expr!(rp, r.as_ref());
 
             asm.push(AssemblyOp::Move(rp, vec![(target, -1)]));
             ctx.free(rp)?;
@@ -52,12 +58,12 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
 
             for (i, arg) in func.args.iter().enumerate() {
                 let ptr = ctx.alloc(*arg);
-                asm.append(&mut compile_expr(ctx, funcs, ptr, &args[i])?);
+                expr!(ptr, &args[i]);
             }
 
             asm.append(&mut compile_stmts(ctx, funcs, &func.code)?);
 
-            asm.append(&mut compile_expr(ctx, funcs, target, func.result.as_ref().unwrap_or_else(|| &IRExpr::Const(0)))?);
+            expr!(target, func.result.as_ref().unwrap_or_else(|| &IRExpr::Const(0)));
 
             ctx.pop();
         }

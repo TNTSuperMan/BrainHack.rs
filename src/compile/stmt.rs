@@ -8,6 +8,12 @@ use crate::{asm::asm::AssemblyOp, compile::{ctx::CompileContext, expr::compile_e
 pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AssemblyOp>> {
     let mut asm: Vec<AssemblyOp> = vec![];
 
+    macro_rules! expr {
+        ($target: expr, $expr: expr) => {
+            asm.append(&mut compile_expr(ctx, funcs, $target, $expr)?);
+        };
+    }
+
     for stmt in stmts {
         match stmt {
             IRStmt::Noop => {}
@@ -15,14 +21,14 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 for var in vars {
                     let ptr = ctx.alloc(var.id);
                     if let Some(init) = &var.init {
-                        asm.append(&mut compile_expr(ctx, funcs, ptr, init)?);
+                        expr!(ptr, init);
                     }
                 }
             }
             IRStmt::Assign { id, value } => {
                 let val_p = ctx.alloc_noname();
 
-                asm.append(&mut compile_expr(ctx, funcs, val_p, value)?);
+                expr!(val_p, value);
                 let ptr = ctx.get(*id)?;
                 asm.push(AssemblyOp::Move(val_p, vec![(ptr, 1)]));
                 
@@ -41,7 +47,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
 
                 for (i, arg) in func.args.iter().enumerate() {
                     let ptr = ctx.alloc(*arg);
-                    asm.append(&mut compile_expr(ctx, funcs, ptr, &args[i])?);
+                    expr!(ptr, &args[i]);
                 }
 
                 asm.append(&mut compile_stmts(ctx, funcs, &func.code)?);
@@ -57,7 +63,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
             IRStmt::While { condition, body } => {
                 let cond_p = ctx.alloc_noname();
 
-                asm.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+                expr!(cond_p, condition);
 
                 ctx.push();
                 let mut asm_body = compile_stmts(ctx, funcs, body)?;
@@ -73,7 +79,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                     let else_p = ctx.alloc_noname();
 
                     asm.push(AssemblyOp::Set(else_p, 1));
-                    asm.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+                    expr!(cond_p, condition);
                     ctx.push();
                     let mut asm_body = compile_stmts(ctx, funcs, body)?;
                     ctx.pop();
@@ -92,7 +98,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 } else {
                     let cond_p = ctx.alloc_noname();
 
-                    asm.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+                    expr!(cond_p, condition);
                     ctx.push();
                     let mut asm_body = compile_stmts(ctx, funcs, body)?;
                     ctx.pop();
