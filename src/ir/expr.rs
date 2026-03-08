@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, expression::{literal::LiteralKind, operator::binary::{ArithmeticOp, BinaryOp, RelationalOp}}};
+use boa_ast::{Expression, expression::{literal::LiteralKind, operator::{binary::{ArithmeticOp, BinaryOp, RelationalOp}, unary::UnaryOp}}};
 
 use crate::ir::{ctx::ParserContext, ir::IRExpr};
 
@@ -28,6 +28,15 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 BinaryOp::Relational(RelationalOp::LessThan) => IRExpr::Gt(right, left),
                 BinaryOp::Relational(RelationalOp::GreaterThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(right, left))),
                 BinaryOp::Relational(RelationalOp::LessThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(left, right))),
+                _ => bail!("unsupport"),
+            })
+        }
+        Expression::Unary(unary) => {
+            let target = Box::new(parse_expr(ctx, unary.target())?);
+            Ok(match unary.op() {
+                UnaryOp::Plus => *target,
+                UnaryOp::Minus => IRExpr::Sub(Box::new(IRExpr::Const(0)), target),
+                UnaryOp::Not => IRExpr::BoolNot(target),
                 _ => bail!("unsupport"),
             })
         }
