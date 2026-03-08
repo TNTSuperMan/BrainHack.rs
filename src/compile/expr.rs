@@ -37,6 +37,37 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
             asm.push(AssemblyOp::Move(rp, vec![(target, -1)]));
             ctx.free(rp)?;
         }
+        IRExpr::Mul(l, r) => {
+            match (l.as_ref(), r.as_ref()) {
+                (IRExpr::Const(nl), IRExpr::Const(nr)) => {
+                    asm.push(AssemblyOp::Set(target, nl.wrapping_mul(*nr)))
+                }
+                (IRExpr::Const(n), exp) |
+                (exp, IRExpr::Const(n)) => {
+                    let tmp = ctx.alloc_noname();
+                    asm.append(&mut compile_expr(ctx, funcs, tmp, exp)?);
+                    asm.push(AssemblyOp::Move(tmp, vec![(target, *n)]));
+                    ctx.free(tmp)?;
+                }
+                (expl, expr) => {
+                    let tmp_l = ctx.alloc_noname();
+                    let tmp_r = ctx.alloc_noname();
+                    let tmp = ctx.alloc_noname();
+
+                    asm.push(AssemblyOp::Set(target, 0));
+                    expr!(tmp_l, expl);
+                    expr!(tmp_r, expr);
+                    asm.push(AssemblyOp::Set(tmp, 0));
+
+                    let mut loop_body: Vec<AssemblyOp> = vec![];
+                    loop_body.push(AssemblyOp::Move(tmp_l, vec![(tmp, 1)]));
+                    loop_body.push(AssemblyOp::Move(tmp, vec![(tmp_l, 1), (target, 1)]));
+                    loop_body.push(AssemblyOp::Add(tmp_r, -1));
+
+                    asm.push(AssemblyOp::Loop(tmp_r, loop_body));
+                }
+            }
+        }
 
         IRExpr::Id { id, last_use: _ } => {
             let ptr = ctx.get(*id)?;
