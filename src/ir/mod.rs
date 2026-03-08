@@ -2,12 +2,13 @@ pub mod ir;
 mod stmt;
 mod expr;
 
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
-use anyhow::Result;
+use anyhow::{Result, bail};
+use boa_ast::{Declaration, Statement, StatementListItem, declaration::Binding, expression::Identifier};
 use boa_parser::{Parser, Source};
 
-use crate::ir::ir::IR;
+use crate::ir::{expr::parse_expr, ir::{IR, IRExpr, IRFunc, IRStmt}, stmt::parse_stmt};
 
 pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let mut parser = Parser::new(Source::from_filepath(fpath)?);
@@ -16,8 +17,57 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let script = parser.parse_script(&mut scope, &mut interner)?;
     println!("{script:?}");
 
-    for stmt in script.statements().iter() {
-        
+    let mut ir = IR {
+        main: vec![],
+        funcs: HashMap::new(),
+    };
+
+    for statement in script.statements().iter() {
+        match statement {
+            StatementListItem::Statement(stmt) => {
+                ir.main.push(parse_stmt(stmt)?);
+            }
+            StatementListItem::Declaration(decr) => {
+                if let Declaration::FunctionDeclaration(func) = decr.as_ref() {
+                    let mut body = func.body().statements().to_vec();
+                    let mut result: Option<IRExpr> = None;
+
+                    if let Some(StatementListItem::Statement(s)) = func.body().statements().last() {
+                        if let Statement::Return(ret) = s.as_ref() {
+                            if let Some(r) = ret.target() {
+                                result = Some(parse_expr(r)?);
+                                body.pop();
+                            }
+                        }
+                    }
+                    ir.funcs.insert(func.name(), IRFunc {
+                        args: func.parameters().as_ref().iter().map(|p| {
+                            if p.is_rest_param() {
+                                bail!("unsupport");
+                            }
+                            if p.init().is_some() {
+                                bail!("todo: func args init");
+                            }
+                            if let Binding::Identifier(id) = p.variable().binding() {
+                                Ok(*id)
+                            } else {
+                                bail!("unsupport");
+                            }
+                        }).collect::<Result<Vec<Identifier>>>()?,
+                        code: body.iter().map(|statement| {
+                            if let StatementListItem::Statement(s) = statement {
+                                parse_stmt(s.as_ref())
+                            } else {
+                                bail!("unsupport")
+                            }
+                        }).collect::<Result<Vec<IRStmt>>>()?,
+                        result,
+                    });
+                } else {
+                    bail!("unsupport");
+                }
+            }
+        }
     }
     
     unimplemented!();

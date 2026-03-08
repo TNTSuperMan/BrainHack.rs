@@ -51,12 +51,12 @@ pub enum IRStmt {
 }
 
 pub struct IRFunc {
-    args: Vec<String>,
-    code: Vec<IRStmt>,
-    result: Option<IRExpr>,
+    pub args: Vec<Identifier>,
+    pub code: Vec<IRStmt>,
+    pub result: Option<IRExpr>,
 }
 
 pub struct IR {
-    main: Vec<IRStmt>,
-    funcs: HashMap<String, IRFunc>,
+    pub main: Vec<IRStmt>,
+    pub funcs: HashMap<Identifier, IRFunc>,
 }
