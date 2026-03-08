@@ -33,7 +33,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                         },
                     })
                 } else {
-                    bail!("unsupport");
+                    bail!("Unsupported variable declaration detected");
                 }
             }).collect::<Result<Vec<IRVarInit>>>().map(|vars| {
                 IRStmt::VariableDefine { vars }
@@ -50,10 +50,10 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                             AssignOp::Sub => IRStmt::Assign { id: *id, value: IRExpr::Sub(Box::new(IRExpr::Id(*id)), Box::new(val)) },
                             AssignOp::Mul => IRStmt::Assign { id: *id, value: IRExpr::Mul(Box::new(IRExpr::Id(*id)), Box::new(val)) },
                             AssignOp::Div => IRStmt::Assign { id: *id, value: IRExpr::Div(Box::new(IRExpr::Id(*id)), Box::new(val)) },
-                            _ => bail!("unsupport"),
+                            _ => bail!("Unsupported assignment detected"),
                         })
                     } else {
-                        bail!("unsupport");
+                        bail!("Unsupported assignment target detected");
                     }
                 }
                 Expression::Call(call) => {
@@ -65,7 +65,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                             }
                         })
                     } else {
-                        bail!("unsupport");
+                        bail!("Unsupported callee detected");
                     }
                 }
                 Expression::Update(upd) => {
@@ -79,7 +79,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                             UpdateOp::DecrementPre => IRStmt::Assign { id: *id, value: IRExpr::Sub(id_expr, one_expr) },
                         })
                     } else {
-                        bail!("unsupport");
+                        bail!("Unsupported update target detected");
                     }
                 }
                 _ => bail!("unimp | unsupport"),
@@ -112,7 +112,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                 body.push(match init {
                     ForLoopInitializer::Var(var) => parse_stmt(&Statement::Var(var.clone()))?,
                     ForLoopInitializer::Expression(expr) => parse_stmt(&Statement::Expression(expr.clone()))?,
-                    _ => bail!("unsupport"),
+                    _ => bail!("Unsupported for-loop initialization detected"),
                 });
             }
 
@@ -132,6 +132,6 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
 
             Ok(IRStmt::Block { body })
         }
-        _ => bail!("unimp")
+        _ => bail!("unimp | unsupport")
     }
 }

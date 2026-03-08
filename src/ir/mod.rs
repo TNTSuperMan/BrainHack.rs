@@ -43,28 +43,28 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
                     ir.funcs.insert(func.name(), IRFunc {
                         args: func.parameters().as_ref().iter().map(|p| {
                             if p.is_rest_param() {
-                                bail!("unsupport");
+                                bail!("Unsupported spread argument detected");
                             }
                             if p.init().is_some() {
-                                bail!("todo: func args init");
+                                bail!("Unimplemented argument init detected");
                             }
                             if let Binding::Identifier(id) = p.variable().binding() {
                                 Ok(*id)
                             } else {
-                                bail!("unsupport");
+                                bail!("Unsupported argument detected");
                             }
                         }).collect::<Result<Vec<Identifier>>>()?,
                         code: body.iter().map(|statement| {
                             if let StatementListItem::Statement(s) = statement {
                                 parse_stmt(s.as_ref())
                             } else {
-                                bail!("unsupport")
+                                bail!("Unsupported declaration detected in function");
                             }
                         }).collect::<Result<Vec<IRStmt>>>()?,
                         result,
                     });
                 } else {
-                    bail!("unsupport");
+                    bail!("Unsupported declaration detected");
                 }
             }
         }
