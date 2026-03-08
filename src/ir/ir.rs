@@ -24,6 +24,7 @@ pub enum IRExpr {
     Input,
 
     BoolNot(Box<IRExpr>),
+    Boolify(Box<IRExpr>),
     Gt(Box<IRExpr>, Box<IRExpr>), // >
 }
 

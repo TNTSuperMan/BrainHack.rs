@@ -113,6 +113,16 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
             ]));
             ctx.free(tmp)?;
         }
+        IRExpr::Boolify(exp) => {
+            let tmp = ctx.alloc_noname();
+            asm.push(AsmOp::Set(target, 0));
+            expr!(tmp, exp.as_ref());
+            asm.push(AsmOp::Loop(tmp, vec![
+                AsmOp::Set(target, 1),
+                AsmOp::Set(tmp, 0),
+            ]));
+            ctx.free(tmp)?;
+        }
 
         _ => bail!("todo")
     }
