@@ -24,7 +24,7 @@ pub fn parse_expr(expr: &Expression) -> Result<IRExpr> {
             })
         }
         Expression::Identifier(id) => {
-            Ok(IRExpr::Id(*id))
+            Ok(IRExpr::Id { id: *id, last_use: false })
         }
         Expression::Call(call) => {
             if let Expression::Identifier(id) = call.function() {

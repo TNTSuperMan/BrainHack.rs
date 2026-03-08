@@ -9,7 +9,10 @@ pub enum IRExpr {
     Sub(Box<IRExpr>, Box<IRExpr>),
     Mul(Box<IRExpr>, Box<IRExpr>),
     Div(Box<IRExpr>, Box<IRExpr>),
-    Id(Identifier),
+    Id {
+        id: Identifier,
+        last_use: bool,
+    },
     Call {
         id: Identifier,
         args: Vec<IRExpr>,

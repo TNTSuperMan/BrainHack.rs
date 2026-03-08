@@ -42,10 +42,10 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                         let val = parse_expr(assign.rhs())?;
                         Ok(match assign.op() {
                             AssignOp::Assign => IRStmt::Assign { id: *id, value: val },
-                            AssignOp::Add => IRStmt::Assign { id: *id, value: IRExpr::Add(Box::new(IRExpr::Id(*id)), Box::new(val)) },
-                            AssignOp::Sub => IRStmt::Assign { id: *id, value: IRExpr::Sub(Box::new(IRExpr::Id(*id)), Box::new(val)) },
-                            AssignOp::Mul => IRStmt::Assign { id: *id, value: IRExpr::Mul(Box::new(IRExpr::Id(*id)), Box::new(val)) },
-                            AssignOp::Div => IRStmt::Assign { id: *id, value: IRExpr::Div(Box::new(IRExpr::Id(*id)), Box::new(val)) },
+                            AssignOp::Add => IRStmt::Assign { id: *id, value: IRExpr::Add(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
+                            AssignOp::Sub => IRStmt::Assign { id: *id, value: IRExpr::Sub(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
+                            AssignOp::Mul => IRStmt::Assign { id: *id, value: IRExpr::Mul(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
+                            AssignOp::Div => IRStmt::Assign { id: *id, value: IRExpr::Div(Box::new(IRExpr::Id { id: *id, last_use: false }), Box::new(val)) },
                             _ => bail!("Unsupported assignment detected"),
                         })
                     } else {
@@ -66,7 +66,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
                 }
                 Expression::Update(upd) => {
                     if let UpdateTarget::Identifier(id) = upd.target() {
-                        let id_expr = Box::new(IRExpr::Id(*id));
+                        let id_expr = Box::new(IRExpr::Id { id: *id, last_use: false });
                         let one_expr = Box::new(IRExpr::Const(1));
                         Ok(match upd.op() {
                             UpdateOp::IncrementPost |
