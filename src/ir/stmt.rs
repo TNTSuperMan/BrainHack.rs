@@ -54,12 +54,22 @@ pub fn parse_stmt(ctx: &mut ParserContext, statement: &Statement) -> Result<IRSt
                 }
                 Expression::Call(call) => {
                     if let Expression::Identifier(id) = call.function() {
-                        call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
-                            IRStmt::Call {
-                                id: id.sym(),
-                                args,
+                        if id.sym() == ctx.interner.get("out").unwrap() {
+                            if let [val_ast] = call.args() {
+                                Ok(IRStmt::Out {
+                                    val: parse_expr(ctx, val_ast)?
+                                })
+                            } else {
+                                bail!("Out argument size mismatch");
                             }
-                        })
+                        } else {
+                            call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
+                                IRStmt::Call {
+                                    id: id.sym(),
+                                    args,
+                                }
+                            })
+                        }
                     } else {
                         bail!("Unsupported callee detected");
                     }

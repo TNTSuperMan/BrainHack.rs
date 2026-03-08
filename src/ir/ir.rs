@@ -55,6 +55,9 @@ pub enum IRStmt {
     Block {
         body: Vec<IRStmt>,
     },
+    Out {
+        val: IRExpr,
+    },
 }
 
 #[derive(Clone, Debug)]
