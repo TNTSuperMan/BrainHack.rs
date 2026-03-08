@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use boa_ast::expression::Identifier;
 
+#[derive(Clone, Debug)]
 pub enum IRExpr {
     Const(i8),
     Add(Box<IRExpr>, Box<IRExpr>),
@@ -19,11 +20,13 @@ pub enum IRExpr {
     },
 }
 
+#[derive(Clone, Debug)]
 pub struct IRVarInit {
     pub id: Identifier,
     pub init: Option<IRExpr>,
 }
 
+#[derive(Clone, Debug)]
 pub enum IRStmt {
     VariableDefine {
         vars: Vec<IRVarInit>,
@@ -50,12 +53,14 @@ pub enum IRStmt {
     },
 }
 
+#[derive(Clone, Debug)]
 pub struct IRFunc {
     pub args: Vec<Identifier>,
     pub code: Vec<IRStmt>,
     pub result: Option<IRExpr>,
 }
 
+#[derive(Clone, Debug)]
 pub struct IR {
     pub main: Vec<IRStmt>,
     pub funcs: HashMap<Identifier, IRFunc>,
