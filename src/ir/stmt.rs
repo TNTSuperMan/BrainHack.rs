@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, Statement, declaration::Binding, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}, statement::iteration::ForLoopInitializer};
+use boa_ast::{Expression, Statement, declaration::{Binding, VarDeclaration}, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}, statement::iteration::ForLoopInitializer};
 
 use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt, IRVarInit}, stmt_item::parse_statement_item};
 
@@ -107,8 +107,8 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
             if let Some(init) = for_ast.init() {
                 body.push(match init {
                     ForLoopInitializer::Var(var) => parse_stmt(&Statement::Var(var.clone()))?,
+                    ForLoopInitializer::Lexical(lex) => parse_stmt(&Statement::Var(VarDeclaration(lex.declaration().variable_list().clone())))?,
                     ForLoopInitializer::Expression(expr) => parse_stmt(&Statement::Expression(expr.clone()))?,
-                    _ => bail!("Unsupported for-loop initialization detected"),
                 });
             }
 
