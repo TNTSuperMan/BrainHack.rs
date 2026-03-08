@@ -128,6 +128,7 @@ pub fn parse_stmt(statement: &Statement) -> Result<IRStmt> {
 
             Ok(IRStmt::Block { body })
         }
+        Statement::Empty => Ok(IRStmt::Noop),
         _ => bail!("unimp | unsupport")
     }
 }
