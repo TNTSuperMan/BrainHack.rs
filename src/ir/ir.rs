@@ -21,6 +21,7 @@ pub enum IRExpr {
         address: Box<IRExpr>,
         index: usize,
     },
+    Input,
 }
 
 #[derive(Clone, Debug)]

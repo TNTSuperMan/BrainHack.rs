@@ -28,12 +28,19 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
         }
         Expression::Call(call) => {
             if let Expression::Identifier(id) = call.function() {
-                call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
-                    IRExpr::Call {
-                        id: id.sym(),
-                        args,
+                if id.sym() == ctx.interner.get("input").unwrap() {
+                    if call.args().len() != 0 {
+                        bail!("Input function argument size mismatch");
                     }
-                })
+                    Ok(IRExpr::Input)
+                } else {
+                    call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
+                        IRExpr::Call {
+                            id: id.sym(),
+                            args,
+                        }
+                    })
+                }
             } else {
                 bail!("unsupport");
             }
