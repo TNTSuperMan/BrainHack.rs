@@ -102,6 +102,17 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
         IRExpr::Input => {
             asm.push(AsmOp::In(target));
         }
+        
+        IRExpr::BoolNot(exp) => {
+            let tmp = ctx.alloc_noname();
+            asm.push(AsmOp::Set(target, 1));
+            expr!(tmp, exp.as_ref());
+            asm.push(AsmOp::Loop(tmp, vec![
+                AsmOp::Set(target, 0),
+                AsmOp::Set(tmp, 0),
+            ]));
+            ctx.free(tmp)?;
+        }
 
         _ => bail!("todo")
     }
