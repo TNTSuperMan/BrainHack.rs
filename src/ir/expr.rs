@@ -9,7 +9,7 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
             match literal.kind() {
                 LiteralKind::Bool(b) => Ok(IRExpr::Const(if *b { 1 } else { 2 })),
                 LiteralKind::Int(n) => Ok(IRExpr::Const((*n).try_into()?)),
-                _ => bail!("unsupport"),
+                _ => bail!("Unsupported literal detected"),
             }
         }
         Expression::Binary(binary) => {
@@ -28,7 +28,7 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 BinaryOp::Relational(RelationalOp::LessThan) => IRExpr::Gt(right, left),
                 BinaryOp::Relational(RelationalOp::GreaterThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(right, left))),
                 BinaryOp::Relational(RelationalOp::LessThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(left, right))),
-                _ => bail!("unsupport"),
+                _ => bail!("Unsupported binary operation detected: `{}`", binary.op()),
             })
         }
         Expression::Unary(unary) => {
@@ -37,7 +37,7 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 UnaryOp::Plus => *target,
                 UnaryOp::Minus => IRExpr::Sub(Box::new(IRExpr::Const(0)), target),
                 UnaryOp::Not => IRExpr::BoolNot(target),
-                _ => bail!("unsupport"),
+                _ => bail!("Unsupported unary operation detected: `{}`", unary.op()),
             })
         }
         Expression::Identifier(id) => {
@@ -59,7 +59,7 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                     })
                 }
             } else {
-                bail!("unsupport");
+                bail!("Unsupported calle detected");
             }
         }
         _ => bail!("unimp")
