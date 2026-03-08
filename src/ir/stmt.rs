@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, Statement, StatementListItem, declaration::Binding, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}};
+use boa_ast::{Expression, Statement, StatementListItem, declaration::Binding, expression::operator::{assign::{AssignOp, AssignTarget}, update::{UpdateOp, UpdateTarget}}, statement::iteration::ForLoopInitializer};
 
 use crate::ir::{expr::parse_expr, ir::{IRExpr, IRStmt, IRVarInit}};
 
@@ -100,6 +100,33 @@ pub fn parse_stmt(statement: &StatementListItem) -> Result<IRStmt> {
                 }
                 Statement::Block(_) => {
                     Ok(IRStmt::Block { body: parse_block(stmt)? })
+                }
+                Statement::ForLoop(for_ast) => {
+                    let mut body: Vec<IRStmt> = vec![];
+
+                    if let Some(init) = for_ast.init() {
+                        body.push(match init {
+                            ForLoopInitializer::Var(var) => parse_stmt(&StatementListItem::Statement(Box::new(Statement::Var(var.clone()))))?,
+                            ForLoopInitializer::Expression(expr) => parse_stmt(&StatementListItem::Statement(Box::new(Statement::Expression(expr.clone()))))?,
+                            _ => bail!("unsupport"),
+                        });
+                    }
+
+                    let mut loop_body = parse_block(for_ast.body())?;
+
+                    if let Some(upd) = for_ast.final_expr() {
+                        loop_body.push(parse_stmt(&StatementListItem::Statement(Box::new(Statement::Expression(upd.clone()))))?);
+                    }
+
+                    body.push(IRStmt::While {
+                        condition: for_ast.condition().map_or(
+                            Ok(IRExpr::Const(1)),
+                            parse_expr
+                        )?,
+                        body: loop_body,
+                    });
+
+                    Ok(IRStmt::Block { body })
                 }
                 _ => bail!("unimp")
             }
