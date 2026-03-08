@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, thread::scope};
 
 use anyhow::{Result, anyhow, bail};
 use boa_interner::Sym;
@@ -53,6 +53,59 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 asm.append(&mut compile_expr(ctx, funcs, val_p, val)?);
                 asm.push(AssemblyOp::Out(val_p));
                 ctx.free(val_p)?;
+            }
+            IRStmt::While { condition, body } => {
+                let cond_p = ctx.alloc_noname();
+
+                asm.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+
+                ctx.push();
+                let mut asm_body = compile_stmts(ctx, funcs, body)?;
+                ctx.pop();
+                asm_body.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+                asm.push(AssemblyOp::Loop(cond_p, asm_body));
+
+                ctx.free(cond_p)?;
+            }
+            IRStmt::If { condition, body, else_body } => {
+                if let Some(else_b) = else_body {
+                    let cond_p = ctx.alloc_noname();
+                    let else_p = ctx.alloc_noname();
+
+                    asm.push(AssemblyOp::Set(else_p, 1));
+                    asm.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+                    ctx.push();
+                    let mut asm_body = compile_stmts(ctx, funcs, body)?;
+                    ctx.pop();
+                    asm_body.push(AssemblyOp::Set(cond_p, 0));
+                    asm_body.push(AssemblyOp::Set(else_p, 0));
+                    asm.push(AssemblyOp::Loop(cond_p, asm_body));
+
+                    ctx.push();
+                    let mut asm_body = compile_stmts(ctx, funcs, else_b)?;
+                    ctx.pop();
+                    asm_body.push(AssemblyOp::Set(else_p, 0));
+                    asm.push(AssemblyOp::Loop(else_p, asm_body));
+
+                    ctx.free(else_p)?;
+                    ctx.free(cond_p)?;
+                } else {
+                    let cond_p = ctx.alloc_noname();
+
+                    asm.append(&mut compile_expr(ctx, funcs, cond_p, condition)?);
+                    ctx.push();
+                    let mut asm_body = compile_stmts(ctx, funcs, body)?;
+                    ctx.pop();
+                    asm_body.push(AssemblyOp::Set(cond_p, 0));
+                    asm.push(AssemblyOp::Loop(cond_p, asm_body));
+
+                    ctx.free(cond_p)?;
+                }
+            }
+            IRStmt::Block { body } => {
+                ctx.push();
+                asm.append(&mut compile_stmts(ctx, funcs, body)?);
+                ctx.pop();
             }
             _ => bail!("todo"),
         }
