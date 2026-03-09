@@ -22,14 +22,17 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     interner.get_or_intern("input");
 
     let mut funcs = HashMap::<Sym, IRFunc>::new();
+    let mut arrays = Vec::new();
     
     Ok(IR {
         main: script.statements().iter().map(|s| {
             parse_statement_item(&mut ParserContext {
                 interner: &interner,
                 funcs: Some(&mut funcs),
+                arrays: &mut arrays,
             }, s)
         }).collect::<Result<Vec<IRStmt>>>()?,
         funcs,
+        arrays,
     })
 }

@@ -76,4 +76,5 @@ pub struct IRFunc {
 pub struct IR {
     pub main: Vec<IRStmt>,
     pub funcs: HashMap<Sym, IRFunc>,
+    pub arrays: Vec<Sym>,
 }

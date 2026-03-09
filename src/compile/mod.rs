@@ -17,7 +17,7 @@ pub fn compile(ir: &IR) -> Result<AssemblyProgram> {
 
     Ok(AssemblyProgram {
         static_memory_size: ctx.max_usage,
-        dynamic_memory_block_size: 0,
+        dynamic_memory_block_size: ir.arrays.len(),
         code,
     })
 }
