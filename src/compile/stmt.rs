@@ -53,6 +53,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 asm.append(&mut compile_stmts(ctx, funcs, &func.code)?);
 
                 ctx.pop();
+                ctx.callstack.pop();
             }
             IRStmt::Out { val } => {
                 let val_p = ctx.alloc_noname();

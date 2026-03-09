@@ -97,6 +97,7 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
             expr!(target, func.result.as_ref().unwrap_or_else(|| &IRExpr::Const(0)));
 
             ctx.pop();
+            ctx.callstack.pop();
         }
         
         IRExpr::Input => {
