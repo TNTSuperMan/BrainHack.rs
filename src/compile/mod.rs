@@ -7,7 +7,7 @@ use anyhow::Result;
 use crate::{asm::asm::AssemblyProgram, compile::{ctx::CompileContext, stmt::compile_stmts}, ir::ir::IR};
 
 pub fn compile(ir: &IR) -> Result<AssemblyProgram> {
-    let mut ctx = CompileContext::new();
+    let mut ctx = CompileContext::new(&ir.arrays);
 
     ctx.push();
 

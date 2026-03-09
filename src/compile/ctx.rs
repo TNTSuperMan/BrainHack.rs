@@ -3,19 +3,21 @@ use std::collections::HashMap;
 use anyhow::{Result, bail};
 use boa_interner::Sym;
 
-pub struct CompileContext {
+pub struct CompileContext<'a> {
     pub usage: usize,
     pub max_usage: usize,
     pub callstack: Vec<Sym>,
     pub var_map: Vec<(usize, HashMap<Sym, usize>)>,
+    pub arrays: &'a [Sym],
 }
-impl CompileContext {
-    pub fn new() -> CompileContext {
+impl<'a> CompileContext<'a> {
+    pub fn new(arrays: &'a [Sym]) -> CompileContext<'a> {
         CompileContext {
             usage: 0,
             max_usage: 0,
             callstack: vec![],
             var_map: vec![],
+            arrays,
         }
     }
     pub fn push(&mut self) {

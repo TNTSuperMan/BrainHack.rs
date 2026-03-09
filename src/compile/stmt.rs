@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{Result, anyhow, bail};
 use boa_interner::Sym;
 
-use crate::{asm::asm::AsmOp, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
+use crate::{asm::{ADDR_PTR, SEND_VAL_PTR, asm::AsmOp}, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
 
 pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AsmOp>> {
     let mut asm: Vec<AsmOp> = vec![];
@@ -113,6 +113,11 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 ctx.push();
                 asm.append(&mut compile_stmts(ctx, funcs, body)?);
                 ctx.pop();
+            }
+            IRStmt::Send { arr, addr, val } => {
+                expr!(ADDR_PTR, addr);
+                expr!(SEND_VAL_PTR, val);
+                asm.push(AsmOp::Send(ctx.arrays.iter().position(|v| v == arr).ok_or_else(|| anyhow!("Undefined array detected"))?));
             }
         }
     }

@@ -18,8 +18,8 @@ pub enum IRExpr {
         args: Vec<IRExpr>,
     },
     Fetch {
+        arr: Sym,
         address: Box<IRExpr>,
-        index: usize,
     },
     Input,
 
@@ -61,6 +61,11 @@ pub enum IRStmt {
         body: Vec<IRStmt>,
     },
     Out {
+        val: IRExpr,
+    },
+    Send {
+        arr: Sym,
+        addr: IRExpr,
         val: IRExpr,
     },
 }
