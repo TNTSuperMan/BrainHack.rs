@@ -124,6 +124,35 @@ pub fn compile_expr(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, targ
             ]));
             ctx.free(tmp)?;
         }
+        IRExpr::Gt(expl, expr) => {
+            let l = ctx.alloc_noname();
+            let r = ctx.alloc_noname();
+            let tmp0 = ctx.alloc_noname();
+            let tmp1 = ctx.alloc_noname();
+
+            expr!(l, expl.as_ref());
+            expr!(r, expr.as_ref());
+            asm.push(AsmOp::Set(tmp0, 0));
+            asm.push(AsmOp::Set(tmp1, 0));
+            asm.push(AsmOp::Set(target, 0));
+            asm.push(AsmOp::Loop(l, vec![
+                AsmOp::Add(tmp0, 1),
+                AsmOp::Loop(r, vec![
+                    AsmOp::Set(tmp0, 0),
+                    AsmOp::Add(tmp1, 1),
+                    AsmOp::Add(r, -1),
+                ]),
+                AsmOp::Move(tmp0, vec![(target, 1)]),
+                AsmOp::Move(tmp1, vec![(r, 1)]),
+                AsmOp::Add(r, -1),
+                AsmOp::Add(l, -1),
+            ]));
+
+            ctx.free(tmp1)?;
+            ctx.free(tmp0)?;
+            ctx.free(r)?;
+            ctx.free(l)?;
+        }
 
         _ => bail!("todo")
     }
