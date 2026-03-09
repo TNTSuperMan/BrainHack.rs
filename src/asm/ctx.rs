@@ -1,4 +1,4 @@
-use crate::asm::utils::repeat;
+use crate::asm::{ADDR_PTR, FETCH_VAL_PTR, SEND_VAL_PTR, utils::repeat};
 
 pub struct AssembleContext {
     pub pointer: usize,
@@ -19,7 +19,13 @@ impl AssembleContext {
     }
 
     pub fn go(&mut self, at: usize) {
-        let delta = (at as isize) - (self.pointer as isize);
+        let real_at = match at {
+            ADDR_PTR => self.st() + self.dy() + 2,
+            FETCH_VAL_PTR => self.st() + self.dy() + 2 + 1,
+            SEND_VAL_PTR => self.st() + (self.dy() + 2) * 2 + 1,
+            _ => at,
+        };
+        let delta = (real_at as isize) - (self.pointer as isize);
         self.push(&repeat(delta, ">", "<"));
         self.pointer = at;
     }
