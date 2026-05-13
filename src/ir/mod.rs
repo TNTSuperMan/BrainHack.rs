@@ -1,16 +1,20 @@
+mod ctx;
+mod expr;
 pub mod ir;
 mod stmt;
 mod stmt_item;
-mod expr;
-mod ctx;
 
 use std::{collections::HashMap, path::Path};
 
-use anyhow::{Result};
+use anyhow::Result;
 use boa_interner::Sym;
 use boa_parser::{Parser, Source};
 
-use crate::ir::{ctx::ParserContext, ir::{IR, IRFunc, IRStmt}, stmt_item::parse_statement_item};
+use crate::ir::{
+    ctx::ParserContext,
+    ir::{IR, IRFunc, IRStmt},
+    stmt_item::parse_statement_item,
+};
 
 pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
     let mut parser = Parser::new(Source::from_filepath(fpath)?);
@@ -23,15 +27,22 @@ pub fn parse_to_ir(fpath: &Path) -> Result<IR> {
 
     let mut funcs = HashMap::<Sym, IRFunc>::new();
     let mut arrays = Vec::new();
-    
+
     Ok(IR {
-        main: script.statements().iter().map(|s| {
-            parse_statement_item(&mut ParserContext {
-                interner: &interner,
-                funcs: Some(&mut funcs),
-                arrays: &mut arrays,
-            }, s)
-        }).collect::<Result<Vec<IRStmt>>>()?,
+        main: script
+            .statements()
+            .iter()
+            .map(|s| {
+                parse_statement_item(
+                    &mut ParserContext {
+                        interner: &interner,
+                        funcs: Some(&mut funcs),
+                        arrays: &mut arrays,
+                    },
+                    s,
+                )
+            })
+            .collect::<Result<Vec<IRStmt>>>()?,
         funcs,
         arrays,
     })

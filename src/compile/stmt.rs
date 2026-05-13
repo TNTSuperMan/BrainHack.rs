@@ -3,9 +3,17 @@ use std::collections::HashMap;
 use anyhow::{Result, anyhow, bail};
 use boa_interner::Sym;
 
-use crate::{asm::{ADDR_PTR, SEND_VAL_PTR, asm::AsmOp}, compile::{ctx::CompileContext, expr::compile_expr}, ir::ir::{IRFunc, IRStmt}};
+use crate::{
+    asm::{ADDR_PTR, SEND_VAL_PTR, asm::AsmOp},
+    compile::{ctx::CompileContext, expr::compile_expr},
+    ir::ir::{IRFunc, IRStmt},
+};
 
-pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stmts: &[IRStmt]) -> Result<Vec<AsmOp>> {
+pub fn compile_stmts(
+    ctx: &mut CompileContext,
+    funcs: &HashMap<Sym, IRFunc>,
+    stmts: &[IRStmt],
+) -> Result<Vec<AsmOp>> {
     let mut asm: Vec<AsmOp> = vec![];
 
     macro_rules! expr {
@@ -31,7 +39,7 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                 expr!(val_p, value);
                 let ptr = ctx.get(*id)?;
                 asm.push(AsmOp::Move(val_p, vec![(ptr, 1)]));
-                
+
                 ctx.free(val_p)?;
             }
             IRStmt::Call { id, args } => {
@@ -39,7 +47,9 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
                     bail!("Recursive call detected");
                 }
                 ctx.callstack.push(*id);
-                let func = funcs.get(id).ok_or_else(|| anyhow!("Undefined function detected"))?;
+                let func = funcs
+                    .get(id)
+                    .ok_or_else(|| anyhow!("Undefined function detected"))?;
                 if func.args.len() != args.len() {
                     bail!("Function args length mismatch");
                 }
@@ -74,7 +84,11 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
 
                 ctx.free(cond_p)?;
             }
-            IRStmt::If { condition, body, else_body } => {
+            IRStmt::If {
+                condition,
+                body,
+                else_body,
+            } => {
                 if let Some(else_b) = else_body {
                     let cond_p = ctx.alloc_noname();
                     let else_p = ctx.alloc_noname();
@@ -117,7 +131,12 @@ pub fn compile_stmts(ctx: &mut CompileContext, funcs: &HashMap<Sym, IRFunc>, stm
             IRStmt::Send { arr, addr, val } => {
                 expr!(ADDR_PTR, addr);
                 expr!(SEND_VAL_PTR, val);
-                asm.push(AsmOp::Send(ctx.arrays.iter().position(|v| v == arr).ok_or_else(|| anyhow!("Undefined array detected"))?));
+                asm.push(AsmOp::Send(
+                    ctx.arrays
+                        .iter()
+                        .position(|v| v == arr)
+                        .ok_or_else(|| anyhow!("Undefined array detected"))?,
+                ));
             }
         }
     }

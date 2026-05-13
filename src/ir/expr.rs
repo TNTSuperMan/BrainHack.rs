@@ -1,17 +1,24 @@
 use anyhow::{Result, bail};
-use boa_ast::{Expression, expression::{literal::LiteralKind, operator::{binary::{ArithmeticOp, BinaryOp, RelationalOp}, unary::UnaryOp}}};
+use boa_ast::{
+    Expression,
+    expression::{
+        literal::LiteralKind,
+        operator::{
+            binary::{ArithmeticOp, BinaryOp, RelationalOp},
+            unary::UnaryOp,
+        },
+    },
+};
 
 use crate::ir::{ctx::ParserContext, ir::IRExpr};
 
 pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> {
     match expr {
-        Expression::Literal(literal) => {
-            match literal.kind() {
-                LiteralKind::Bool(b) => Ok(IRExpr::Const(if *b { 1 } else { 2 })),
-                LiteralKind::Int(n) => Ok(IRExpr::Const((*n).try_into()?)),
-                _ => bail!("Unsupported literal detected"),
-            }
-        }
+        Expression::Literal(literal) => match literal.kind() {
+            LiteralKind::Bool(b) => Ok(IRExpr::Const(if *b { 1 } else { 2 })),
+            LiteralKind::Int(n) => Ok(IRExpr::Const((*n).try_into()?)),
+            _ => bail!("Unsupported literal detected"),
+        },
         Expression::Binary(binary) => {
             let left = Box::new(parse_expr(ctx, binary.lhs())?);
             let right = Box::new(parse_expr(ctx, binary.rhs())?);
@@ -20,14 +27,22 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 BinaryOp::Arithmetic(ArithmeticOp::Sub) => IRExpr::Sub(left, right),
                 BinaryOp::Arithmetic(ArithmeticOp::Mul) => IRExpr::Mul(left, right),
                 BinaryOp::Arithmetic(ArithmeticOp::Div) => IRExpr::Div(left, right),
-                BinaryOp::Relational(RelationalOp::Equal) |
-                BinaryOp::Relational(RelationalOp::StrictEqual) => IRExpr::BoolNot(Box::new(IRExpr::Sub(left, right))),
-                BinaryOp::Relational(RelationalOp::NotEqual) |
-                BinaryOp::Relational(RelationalOp::StrictNotEqual) => IRExpr::Boolify(Box::new(IRExpr::Sub(left, right))),
+                BinaryOp::Relational(RelationalOp::Equal)
+                | BinaryOp::Relational(RelationalOp::StrictEqual) => {
+                    IRExpr::BoolNot(Box::new(IRExpr::Sub(left, right)))
+                }
+                BinaryOp::Relational(RelationalOp::NotEqual)
+                | BinaryOp::Relational(RelationalOp::StrictNotEqual) => {
+                    IRExpr::Boolify(Box::new(IRExpr::Sub(left, right)))
+                }
                 BinaryOp::Relational(RelationalOp::GreaterThan) => IRExpr::Gt(left, right),
                 BinaryOp::Relational(RelationalOp::LessThan) => IRExpr::Gt(right, left),
-                BinaryOp::Relational(RelationalOp::GreaterThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(right, left))),
-                BinaryOp::Relational(RelationalOp::LessThanOrEqual) => IRExpr::BoolNot(Box::new(IRExpr::Gt(left, right))),
+                BinaryOp::Relational(RelationalOp::GreaterThanOrEqual) => {
+                    IRExpr::BoolNot(Box::new(IRExpr::Gt(right, left)))
+                }
+                BinaryOp::Relational(RelationalOp::LessThanOrEqual) => {
+                    IRExpr::BoolNot(Box::new(IRExpr::Gt(left, right)))
+                }
                 _ => bail!("Unsupported binary operation detected: `{}`", binary.op()),
             })
         }
@@ -40,9 +55,10 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 _ => bail!("Unsupported unary operation detected: `{}`", unary.op()),
             })
         }
-        Expression::Identifier(id) => {
-            Ok(IRExpr::Id { id: id.sym(), last_use: false })
-        }
+        Expression::Identifier(id) => Ok(IRExpr::Id {
+            id: id.sym(),
+            last_use: false,
+        }),
         Expression::Call(call) => {
             if let Expression::Identifier(id) = call.function() {
                 if id.sym() == ctx.interner.get("input").unwrap() {
@@ -51,17 +67,16 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                     }
                     Ok(IRExpr::Input)
                 } else {
-                    call.args().iter().map(|e| parse_expr(ctx, e)).collect::<Result<Vec<IRExpr>>>().map(|args| {
-                        IRExpr::Call {
-                            id: id.sym(),
-                            args,
-                        }
-                    })
+                    call.args()
+                        .iter()
+                        .map(|e| parse_expr(ctx, e))
+                        .collect::<Result<Vec<IRExpr>>>()
+                        .map(|args| IRExpr::Call { id: id.sym(), args })
                 }
             } else {
                 bail!("Unsupported calle detected");
             }
         }
-        _ => bail!("unimp")
+        _ => bail!("unimp"),
     }
 }

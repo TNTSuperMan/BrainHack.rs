@@ -1,10 +1,14 @@
 mod ctx;
-mod stmt;
 mod expr;
+mod stmt;
 
 use anyhow::Result;
 
-use crate::{asm::asm::AssemblyProgram, compile::{ctx::CompileContext, stmt::compile_stmts}, ir::ir::IR};
+use crate::{
+    asm::asm::AssemblyProgram,
+    compile::{ctx::CompileContext, stmt::compile_stmts},
+    ir::ir::IR,
+};
 
 pub fn compile(ir: &IR) -> Result<AssemblyProgram> {
     let mut ctx = CompileContext::new(&ir.arrays);

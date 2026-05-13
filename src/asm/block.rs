@@ -10,9 +10,7 @@ impl AddrMap {
         let block = dy + 2;
         let addr = st + block;
         let temp = addr + 1;
-        AddrMap {
-            block, addr, temp,
-        }
+        AddrMap { block, addr, temp }
     }
 }
 
@@ -65,7 +63,7 @@ pub fn assemble_block(ctx: &mut AssembleContext, block: &[AsmOp]) {
 
                 ctx.go(addr); // アドレスをデクリメント
                 ctx.push("-");
-                
+
                 ctx.push("[-"); // アドレスをmove
                 ctx.go(addr + block);
                 ctx.push("+");
@@ -134,7 +132,7 @@ pub fn assemble_block(ctx: &mut AssembleContext, block: &[AsmOp]) {
 
                 ctx.go(addr); // アドレスをデクリメント
                 ctx.push("-");
-                
+
                 ctx.push("[-"); // アドレスをmove
                 ctx.go(addr + block);
                 ctx.push("+");

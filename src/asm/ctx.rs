@@ -14,7 +14,7 @@ impl AssembleContext {
             pointer: 0,
             code: String::new(),
             static_memory_size,
-            dynamic_memory_block_size
+            dynamic_memory_block_size,
         }
     }
 
@@ -35,7 +35,7 @@ impl AssembleContext {
     pub fn push(&mut self, str: &str) {
         self.code.push_str(str);
     }
-    
+
     pub fn st(&self) -> usize {
         self.static_memory_size
     }

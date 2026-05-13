@@ -1,6 +1,6 @@
 mod asm;
-mod ir;
 mod compile;
+mod ir;
 
 use std::{env::args, path::Path, process::ExitCode};
 
@@ -18,7 +18,7 @@ fn resulty_main(input: &str) -> Result<()> {
 
 fn main() -> ExitCode {
     let args: Vec<String> = args().collect();
-    
+
     if args.len() < 2 {
         println!("usage: {} [INPUT]", args[0]);
         ExitCode::FAILURE
