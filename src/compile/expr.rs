@@ -75,7 +75,7 @@ pub fn compile_expr(
             }
         },
 
-        IRExpr::Id { id, last_use: _ } => {
+        IRExpr::Id(id) => {
             let ptr = ctx.get(*id)?;
             let tmp = ctx.alloc_noname();
             asm.push(AsmOp::Move(ptr, vec![(tmp, 1)]));

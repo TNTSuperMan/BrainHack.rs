@@ -61,43 +61,19 @@ pub fn parse_stmt(ctx: &mut ParserContext, statement: &Statement) -> Result<IRSt
                         },
                         AssignOp::Add => IRStmt::Assign {
                             id: id.sym(),
-                            value: IRExpr::Add(
-                                Box::new(IRExpr::Id {
-                                    id: id.sym(),
-                                    last_use: false,
-                                }),
-                                Box::new(val),
-                            ),
+                            value: IRExpr::Add(Box::new(IRExpr::Id(id.sym())), Box::new(val)),
                         },
                         AssignOp::Sub => IRStmt::Assign {
                             id: id.sym(),
-                            value: IRExpr::Sub(
-                                Box::new(IRExpr::Id {
-                                    id: id.sym(),
-                                    last_use: false,
-                                }),
-                                Box::new(val),
-                            ),
+                            value: IRExpr::Sub(Box::new(IRExpr::Id(id.sym())), Box::new(val)),
                         },
                         AssignOp::Mul => IRStmt::Assign {
                             id: id.sym(),
-                            value: IRExpr::Mul(
-                                Box::new(IRExpr::Id {
-                                    id: id.sym(),
-                                    last_use: false,
-                                }),
-                                Box::new(val),
-                            ),
+                            value: IRExpr::Mul(Box::new(IRExpr::Id(id.sym())), Box::new(val)),
                         },
                         AssignOp::Div => IRStmt::Assign {
                             id: id.sym(),
-                            value: IRExpr::Div(
-                                Box::new(IRExpr::Id {
-                                    id: id.sym(),
-                                    last_use: false,
-                                }),
-                                Box::new(val),
-                            ),
+                            value: IRExpr::Div(Box::new(IRExpr::Id(id.sym())), Box::new(val)),
                         },
                         _ => bail!("Unsupported assignment detected"),
                     })
@@ -128,10 +104,7 @@ pub fn parse_stmt(ctx: &mut ParserContext, statement: &Statement) -> Result<IRSt
             }
             Expression::Update(upd) => {
                 if let UpdateTarget::Identifier(id) = upd.target() {
-                    let id_expr = Box::new(IRExpr::Id {
-                        id: id.sym(),
-                        last_use: false,
-                    });
+                    let id_expr = Box::new(IRExpr::Id(id.sym()));
                     let one_expr = Box::new(IRExpr::Const(1));
                     Ok(match upd.op() {
                         UpdateOp::IncrementPost | UpdateOp::IncrementPre => IRStmt::Assign {

@@ -9,7 +9,7 @@ pub enum IRExpr {
     Sub(Box<IRExpr>, Box<IRExpr>),
     Mul(Box<IRExpr>, Box<IRExpr>),
     Div(Box<IRExpr>, Box<IRExpr>),
-    Id { id: Sym, last_use: bool },
+    Id(Sym),
     Call { id: Sym, args: Vec<IRExpr> },
     Fetch { arr: Sym, address: Box<IRExpr> },
     Input,

@@ -55,10 +55,7 @@ pub fn parse_expr(ctx: &mut ParserContext, expr: &Expression) -> Result<IRExpr> 
                 _ => bail!("Unsupported unary operation detected: `{}`", unary.op()),
             })
         }
-        Expression::Identifier(id) => Ok(IRExpr::Id {
-            id: id.sym(),
-            last_use: false,
-        }),
+        Expression::Identifier(id) => Ok(IRExpr::Id(id.sym())),
         Expression::Call(call) => {
             if let Expression::Identifier(id) = call.function() {
                 if id.sym() == ctx.interner.get("input").unwrap() {
