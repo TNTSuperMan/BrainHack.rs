@@ -2,27 +2,28 @@ mod asm;
 mod ir;
 mod compile;
 
-use std::{env::args, fs, path::Path, process::ExitCode};
+use std::{env::args, path::Path, process::ExitCode};
 
 use anyhow::Result;
 
 use crate::{compile::compile, ir::parse_to_ir};
 
-fn resulty_main(input: &str, output: &str) -> Result<()> {
+fn resulty_main(input: &str) -> Result<()> {
     let ir = parse_to_ir(&Path::new(input))?;
     let asm = compile(&ir)?;
-    fs::write(output, asm.assemble())?;
+    let bf = asm.assemble();
+    println!("{bf}");
     Ok(())
 }
 
 fn main() -> ExitCode {
     let args: Vec<String> = args().collect();
     
-    if args.len() < 3 {
-        println!("usage: {} [INPUT] [OUTPUT]", args[0]);
+    if args.len() < 2 {
+        println!("usage: {} [INPUT]", args[0]);
         ExitCode::FAILURE
     } else {
-        if let Err(e) = resulty_main(&args[1], &args[2]) {
+        if let Err(e) = resulty_main(&args[1]) {
             eprintln!("Error: {e:?}");
             ExitCode::FAILURE
         } else {
