@@ -2,9 +2,12 @@ use anyhow::{Result, bail};
 use boa_ast::{
     Expression, Statement,
     declaration::{Binding, VarDeclaration},
-    expression::operator::{
-        assign::{AssignOp, AssignTarget},
-        update::{UpdateOp, UpdateTarget},
+    expression::{
+        access::{PropertyAccess, PropertyAccessField},
+        operator::{
+            assign::{AssignOp, AssignTarget},
+            update::{UpdateOp, UpdateTarget},
+        },
     },
     statement::iteration::ForLoopInitializer,
 };
@@ -52,8 +55,8 @@ pub fn parse_stmt(ctx: &mut ParserContext, statement: &Statement) -> Result<IRSt
             .map(|vars| IRStmt::VariableDefine { vars }),
         Statement::Expression(expr) => match expr {
             Expression::Assign(assign) => {
+                let val = parse_expr(ctx, assign.rhs())?;
                 if let AssignTarget::Identifier(id) = assign.lhs() {
-                    let val = parse_expr(ctx, assign.rhs())?;
                     Ok(match assign.op() {
                         AssignOp::Assign => IRStmt::Assign {
                             id: id.sym(),
@@ -77,6 +80,18 @@ pub fn parse_stmt(ctx: &mut ParserContext, statement: &Statement) -> Result<IRSt
                         },
                         _ => bail!("Unsupported assignment detected"),
                     })
+                } else if let AssignTarget::Access(PropertyAccess::Simple(access)) = assign.lhs() {
+                    if let (Expression::Identifier(id), PropertyAccessField::Expr(expr)) =
+                        (access.target(), access.field())
+                    {
+                        Ok(IRStmt::Send {
+                            arr: id.sym(),
+                            addr: parse_expr(ctx, expr.as_ref())?,
+                            val,
+                        })
+                    } else {
+                        bail!("Unsupported assignment target detected");
+                    }
                 } else {
                     bail!("Unsupported assignment target detected");
                 }
